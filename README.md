@@ -28,7 +28,7 @@ The Three.js and cannon-es modules load from jsDelivr, so an internet connection
 | `M` | Open or close the world map |
 | `Esc` | Pause and open settings |
 
-Explore in any direction while the HUD tracks distance and world coordinates. Press `R` to recover to the nearest highway. Phones and tablets get on-screen controls for steering, throttle, brake, drifting, camera, recovery, the world map, and the garage.
+Explore in any direction while the HUD tracks distance and world coordinates. Open the map and click or tap any city, landmark, or event marker to set a destination; the HUD arrow guides you there and clears when you arrive. Press `R` to recover to the nearest highway. Phones and tablets get on-screen controls for steering, throttle, brake, drifting, camera, recovery, the world map, and the garage.
 
 Standard gamepads are supported: left stick or D-pad steers, triggers brake and accelerate, A/B drifts, X changes camera, Y recovers, and Menu pauses.
 
