@@ -465,6 +465,7 @@
       nearbyEventKey=null;document.getElementById('eventPrompt').classList.add('hidden');
       activeEvent={key,definition,difficultyKey,difficulty:{...difficulty},time:0,score:0,checkpoint:0,position:1,opponents:[],countdown:definition.type==='race'?3:0,launchFlash:0};eventZones.forEach(zone=>{zone.mesh.visible=false;zone.beacon.visible=false;zone.label.visible=false});document.getElementById('objectiveLabel').textContent=definition.name+' · '+activeEvent.difficulty.name;
       if(definition.type==='race'){
+        const firstCheckpoint=definition.checkpoints[0],startDirection=firstCheckpoint.clone().sub(definition.position);heading=Math.atan2(-startDirection.x,-startDirection.z);driveSpeed=lateralSpeed=visualSteer=steerHoldTime=driftDuration=spinoutTime=0;spinoutCause='';spinoutVelocityX=spinoutVelocityZ=spinoutAngularVelocity=0;isDrifting=false;chassisBody.velocity.setZero();chassisBody.angularVelocity.setZero();chassisBody.quaternion.setFromEuler(0,heading,0);car.quaternion.copy(chassisBody.quaternion);
         checkpointMarker.material.color.set(definition.color);checkpointMarker.material.emissive.set(definition.color);checkpointMarker.position.copy(definition.checkpoints[0]);checkpointMarker.visible=true;
         document.getElementById('checkpointGuide').classList.remove('hidden');
         const points=[definition.position.clone(),...definition.checkpoints.map(point=>point.clone())],course=new THREE.CatmullRomCurve3(points,false,'centripetal'),courseLength=course.getLength();
