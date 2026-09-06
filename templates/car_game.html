@@ -494,6 +494,7 @@
       if(event.definition.type==='drift'){if(isDrifting)event.score+=Math.abs(lateralSpeed)*Math.abs(driveSpeed)*dt*(1+driftStrength*3);if(event.time>=event.definition.duration)finishEvent(event.score>=getDriftTargets(event.definition,event.difficulty)[0]);return}
       updateRaceOpponents(event,dt);
       const target=event.definition.checkpoints[event.checkpoint],distance=car.position.distanceTo(target),relativeBearing=Math.atan2(target.x-car.position.x,-(target.z-car.position.z))+heading;document.getElementById('checkpointArrow').style.transform='rotate('+relativeBearing+'rad)';document.getElementById('checkpointDistance').textContent=Math.round(distance)+' M';checkpointMarkers.forEach((marker,index)=>{marker.rotation.z+=dt*(index===event.checkpoint?1.4:.25)});if(distance<10){event.checkpoint++;showBanner('Checkpoint',event.checkpoint+' / '+event.definition.checkpoints.length);if(event.checkpoint>=event.definition.checkpoints.length){finishEvent(event.position===1);return}updateCheckpointMarkers(event.checkpoint)}
+      else{const checkpointStart=event.checkpoint===0?event.definition.position:event.definition.checkpoints[event.checkpoint-1],segment=target.clone().sub(checkpointStart);if(car.position.clone().sub(target).dot(segment)>0){recover();showBanner('Missed Checkpoint',event.checkpoint===0?'Restarted at race start':'Restarted at last checkpoint');return}}
       if(event.time>120)finishEvent(false,false);
     }
 
@@ -508,10 +509,11 @@
     }
     function showBanner(title,text){document.getElementById('eventTitle').textContent=title;document.getElementById('eventText').textContent=text;document.getElementById('eventBanner').classList.add('show');bannerTimer=2.2}
     function recover(){
-      const x=Math.round(chassisBody.position.x/ROAD_SPACING)*ROAD_SPACING;
-      const z=Math.round(chassisBody.position.z/ROAD_SPACING)*ROAD_SPACING;
-      const useNorthSouth=Math.abs(chassisBody.position.x-x)<Math.abs(chassisBody.position.z-z);
-      heading=useNorthSouth?0:-Math.PI/2;driveSpeed=0;lateralSpeed=0;steerHoldTime=0;lastSteerInput=0;driftStrength=0;driftSpeedFactor=0;driftDeceleration=0;driftDuration=0;spinoutCause='';spinoutTime=0;spinoutVelocityX=spinoutVelocityZ=spinoutAngularVelocity=0;isDrifting=false;chassisBody.position.set(useNorthSouth?x:chassisBody.position.x,CHASSIS_RIDE_HEIGHT,useNorthSouth?chassisBody.position.z:z);chassisBody.velocity.setZero();chassisBody.angularVelocity.setZero();chassisBody.quaternion.setFromEuler(0,heading,0);showBanner('Recovered','Nearest highway');
+      const race=activeEvent?.definition.type==='race'?activeEvent:null;
+      let recoveryX,recoveryZ,recoveryMessage;
+      if(race){const checkpointIndex=Math.min(race.checkpoint,race.definition.checkpoints.length-1),recoveryPoint=race.checkpoint===0?race.definition.position:race.definition.checkpoints[checkpointIndex-1],target=race.definition.checkpoints[checkpointIndex],direction=target.clone().sub(recoveryPoint);recoveryX=recoveryPoint.x;recoveryZ=recoveryPoint.z;heading=Math.atan2(-direction.x,-direction.z);recoveryMessage=race.checkpoint===0?'Race start':'Last checkpoint'}
+      else{const x=Math.round(chassisBody.position.x/ROAD_SPACING)*ROAD_SPACING,z=Math.round(chassisBody.position.z/ROAD_SPACING)*ROAD_SPACING,useNorthSouth=Math.abs(chassisBody.position.x-x)<Math.abs(chassisBody.position.z-z);recoveryX=useNorthSouth?x:chassisBody.position.x;recoveryZ=useNorthSouth?chassisBody.position.z:z;heading=useNorthSouth?0:-Math.PI/2;recoveryMessage='Nearest highway'}
+      driveSpeed=0;lateralSpeed=0;steerHoldTime=0;lastSteerInput=0;driftStrength=0;driftSpeedFactor=0;driftDeceleration=0;driftDuration=0;spinoutCause='';spinoutTime=0;spinoutVelocityX=spinoutVelocityZ=spinoutAngularVelocity=0;isDrifting=false;chassisBody.position.set(recoveryX,CHASSIS_RIDE_HEIGHT,recoveryZ);chassisBody.velocity.setZero();chassisBody.angularVelocity.setZero();chassisBody.quaternion.setFromEuler(0,heading,0);car.position.copy(chassisBody.position);car.quaternion.copy(chassisBody.quaternion);showBanner('Recovered',recoveryMessage);
     }
     function restart(){distanceTravelled=0;damage=0;chassisBody.position.set(0,2,25);recover();updateHud(0)}
 
