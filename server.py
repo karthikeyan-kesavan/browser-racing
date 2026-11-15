@@ -7,10 +7,13 @@ import uuid
 
 from flask import Flask, render_template, request, session
 from flask_socketio import SocketIO, emit
+from game.pulse import register_pulse
 
 app = Flask(__name__)
 app.config["SECRET_KEY"] = os.urandom(24)
-socketio = SocketIO(app, cors_allowed_origins="*")
+app.config["TEMPLATES_AUTO_RELOAD"] = True
+socketio = SocketIO(app, cors_allowed_origins="*", async_mode="threading")
+pulse_rooms = register_pulse(socketio)
 
 WORLD_WIDTH = 3200
 WORLD_HEIGHT = 2200
@@ -67,7 +70,6 @@ STATE = {
     "target_count": MIN_MATCH_SIZE,
     "chests": [],
 }
-
 
 def create_player(player_id, sid, is_bot=False, display_name=None):
     if display_name is None:
@@ -397,6 +399,21 @@ def lobby_start_timer():
 @app.route("/")
 def index():
     return render_template("car_game.html")
+
+
+@app.route("/memory-ammunition")
+def memory_ammunition():
+    return render_template("memory_ammunition.html")
+
+
+@app.route("/lanternbound")
+def lanternbound():
+    return render_template("lanternbound.html")
+
+
+@app.route("/pulse-arena")
+def pulse_arena():
+    return render_template("pulse_arena.html")
 
 
 @app.route("/health")

@@ -1,0 +1,1018 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Pulse Arena</title>
+<style>
+:root{color-scheme:dark;--bg:#090d19;--panel:#111a2b;--edge:#293750;--text:#eef5ff;--muted:#93a4bc;--cyan:#69f3db;--red:#ff668a;--gold:#ffe29a}
+*{box-sizing:border-box}body{margin:0;overflow:hidden;background:var(--bg);color:var(--text);font:14px system-ui,sans-serif;touch-action:none}button,a{-webkit-tap-highlight-color:transparent}button{font:inherit;cursor:pointer}button:focus-visible,a:focus-visible{outline:3px solid var(--gold);outline-offset:4px}
+#arena{display:block;width:100vw;height:100dvh;position:fixed;inset:0}
+header{position:fixed;top:max(18px,env(safe-area-inset-top));left:24px;right:24px;display:flex;align-items:center;justify-content:space-between;gap:14px;pointer-events:none}
+.brand small{display:block;color:var(--cyan);font-size:10px;font-weight:800;letter-spacing:3px}.brand h1{margin:3px 0;font-size:24px;letter-spacing:-1px}
+.header-actions{display:flex;gap:8px;align-items:center}.shop-toggle{pointer-events:auto;border:1px solid var(--edge);border-radius:12px;background:var(--panel);color:var(--gold);padding:10px 14px;font-weight:800}
+.stats{display:flex;gap:8px}.stat{min-width:84px;border:1px solid var(--edge);background:#111a2be8;border-radius:12px;padding:9px 14px}.stat small{display:block;color:var(--muted);font-size:9px;letter-spacing:1.5px}.stat b{font-size:21px;font-variant-numeric:tabular-nums}
+.icon{width:40px;height:40px;pointer-events:auto;border:1px solid var(--edge);border-radius:12px;background:var(--panel);color:var(--text)}
+#status{position:fixed;top:108px;left:50%;transform:translateX(-50%);text-align:center;color:var(--muted);font-size:12px;letter-spacing:1px;pointer-events:none;width:90%}
+#status.threat{color:var(--red);font-weight:800}#toast{position:fixed;top:38%;left:50%;transform:translateX(-50%);color:var(--gold);font-size:clamp(22px,4vw,40px);font-weight:900;letter-spacing:2px;text-align:center;pointer-events:none;text-shadow:0 3px 18px #000;opacity:0;transition:opacity .12s}#toast.visible{opacity:1}
+.bottom{position:fixed;bottom:max(22px,env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:12px;width:max-content;max-width:96%}
+.abilities{display:flex;gap:10px}.ability{position:relative;min-width:142px;overflow:hidden;padding:12px 22px;border:1px solid #69f3db80;border-radius:14px;background:#132c32;color:var(--cyan);font-weight:800;touch-action:none;user-select:none}.ability small{display:block;font-size:9px;letter-spacing:1px;margin-top:3px;color:var(--muted)}.ability.dash{border-color:#9ca7ff80;color:#b2baff;background:#20233c}.ability:disabled{border-color:var(--edge);color:var(--muted);background:var(--panel);cursor:default}.ability .bar{position:absolute;bottom:0;left:0;height:3px;background:currentColor;width:100%}
+.help{color:var(--muted);font-size:11px;text-align:center}.dpad{display:none;position:fixed;left:16px;bottom:max(24px,env(safe-area-inset-bottom));grid-template-columns:repeat(3,42px);grid-template-rows:repeat(3,42px);gap:4px}.dpad button{background:#17243be8;border:1px solid var(--edge);border-radius:12px;color:var(--text);font-size:18px;touch-action:none;user-select:none}.dpad button.active{background:#315b65;border-color:var(--cyan)}.dpad [data-key="w"]{grid-column:2}.dpad [data-key="a"]{grid-column:1;grid-row:2}.dpad [data-key="s"]{grid-column:2;grid-row:3}.dpad [data-key="d"]{grid-column:3;grid-row:2}
+.overlay{position:fixed;inset:0;z-index:5;background:#060b16bf;backdrop-filter:blur(12px);display:grid;place-items:center;padding:22px;overflow:auto;touch-action:pan-y}.hidden{display:none!important}.card{width:min(480px,100%);background:linear-gradient(150deg,#1c2c43,#0e1626);border:1px solid #405572;border-radius:24px;padding:30px;box-shadow:0 25px 90px #0009}.eyebrow{color:var(--cyan);font-size:10px;letter-spacing:3px;font-weight:800}.card h2{font-size:clamp(36px,8vw,58px);line-height:1;letter-spacing:-2px;margin:13px 0 18px}.card h2 span{color:var(--cyan)}.card p{color:#a9bad0;line-height:1.6;font-size:13px}.rules{display:grid;gap:12px;margin:24px 0}.rule{display:flex;gap:12px;align-items:center;font-size:12px;color:#c8d5e6}.rule b{display:grid;place-items:center;flex:0 0 30px;height:30px;background:#203f49;color:var(--cyan);border-radius:9px}.primary{display:block;width:100%;padding:15px;border:0;border-radius:12px;background:var(--cyan);color:#09221f;font-weight:900;letter-spacing:1px}.secondary{display:block;width:100%;padding:13px;border:1px solid var(--edge);border-radius:12px;background:transparent;color:var(--muted);margin-top:10px}.card .fine{font-size:10px;text-align:center;color:var(--muted)}
+.shop-card{width:min(840px,100%);max-height:calc(100dvh - 44px);overflow:auto}.shop-head{display:flex;justify-content:space-between;align-items:center;gap:12px}.shop-head h2{font-size:32px;letter-spacing:-1px;margin:10px 0}.shop-tabs{display:flex;gap:8px;margin:18px 0}.shop-tabs button{flex:1;border:1px solid var(--edge);border-radius:10px;background:var(--panel);color:var(--muted);padding:10px}.shop-tabs button[aria-pressed="true"]{border-color:var(--cyan);color:var(--cyan)}.shop-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(155px,1fr));gap:12px}.shop-item{border:1px solid var(--edge);border-radius:14px;background:#101b2c;padding:12px;display:flex;flex-direction:column}.shop-item.equipped{border-color:var(--cyan)}.shop-item canvas{width:100%;height:84px;background:#142438;border-radius:9px}.shop-item h3{font-size:15px;margin:10px 0 4px}.shop-item p{font-size:11px;line-height:1.45;flex:1;margin:4px 0 12px}.shop-item button{border:0;border-radius:8px;padding:10px;background:var(--cyan);color:#09221f;font-weight:800}.shop-item button:disabled{background:#26364c;color:var(--muted);cursor:default}.shop-balance{color:var(--gold);font-size:16px;font-weight:800}.save-warning{position:fixed;bottom:0;left:0;right:0;z-index:10;margin:0;background:#4c2431;color:#fff;padding:8px 14px;font-size:11px;text-align:center}.shop-message{min-height:20px;color:var(--gold)!important}.reset-confirm{padding:12px;border:1px solid var(--red);border-radius:12px;margin-top:12px}.reset-confirm button{margin:5px 8px 0 0}
+@media(max-width:640px){header{top:max(12px,env(safe-area-inset-top));left:14px;right:14px;gap:7px;flex-wrap:wrap}.brand h1{font-size:18px}.brand small{font-size:8px;letter-spacing:2px}.stats{gap:5px;order:3;width:100%;justify-content:center}.stat{min-width:58px;padding:5px 8px;border-radius:9px}.stat b{font-size:17px}.stat small{font-size:8px;letter-spacing:.5px}.icon{width:34px;height:34px}.shop-toggle{padding:8px 12px}.header-actions{margin-left:auto}#status{top:119px;font-size:10px}.card{padding:24px}.help{display:none}.shop-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.shop-card{padding:18px}.shop-tabs{gap:5px}.shop-tabs button{padding:9px 4px;font-size:12px}}
+@media(pointer:coarse){.dpad{display:grid}.bottom{left:auto;right:16px;transform:none;bottom:max(26px,env(safe-area-inset-bottom));width:auto}.abilities{flex-direction:column;gap:8px}.ability{min-width:124px;padding:12px 16px}.help{display:none}}
+@media(max-height:500px){header{top:8px}#status{top:72px}.bottom{bottom:8px}.help{display:none}.card{padding:18px}.card h2{font-size:32px;margin:8px 0}.rules{margin:12px 0;gap:8px}.dpad{bottom:8px;grid-template-columns:repeat(3,34px);grid-template-rows:repeat(3,34px)}}
+.shop-item canvas{object-fit:contain}
+.room-input{display:block;width:100%;margin:7px 0 14px;padding:12px;border:1px solid var(--edge);border-radius:10px;background:#0c1727;color:var(--text);font:inherit;touch-action:auto}.room-code{font-size:36px;font-weight:900;letter-spacing:5px;color:var(--gold);margin:12px 0}.room-members{padding-left:22px;color:var(--text);line-height:1.9}.online-message{color:var(--gold)!important;min-height:20px}.primary:disabled{background:#314958;color:var(--muted);cursor:default}
+</style>
+</head>
+<body>
+<canvas id="arena" aria-label="Top-down Pulse Arena. Move with WASD or arrows, parry with Space or F when targeted, use your equipped ability with Q or Shift." tabindex="0"></canvas>
+<header>
+  <div class="brand"><small>DEFLECT. SURVIVE. REPEAT.</small><h1>PULSE ARENA</h1></div>
+  <div class="stats"><div class="stat"><small>ALIVE</small><b id="alive">6</b></div><div class="stat"><small>RALLY</small><b id="rally">0</b></div><div class="stat"><small>WINS</small><b id="wins">0</b></div><div class="stat"><small>COINS</small><b id="coins">0</b></div></div>
+  <div class="header-actions"><button id="exit-online" class="shop-toggle hidden">LEAVE</button><button class="shop-toggle" data-open-shop>SHOP</button><button id="pause" class="icon" aria-label="Pause game" disabled>II</button></div>
+</header>
+<div id="status" role="status">A single ball. Six contenders. One survivor.</div>
+<div id="toast" role="status"></div>
+<div class="bottom"><div class="abilities">
+  <button id="parry" class="ability" disabled><span class="label">PARRY</span><small>SPACE / F / CLICK</small><span class="bar"></span></button>
+  <button id="special" class="ability dash" disabled><span class="label">DASH</span><small>Q / SHIFT</small><span class="bar"></span></button>
+</div><div class="help">WASD / ARROWS move &nbsp; | &nbsp; Mouse aims your return &nbsp; | &nbsp; Q / SHIFT ability &nbsp; | &nbsp; ESC pauses</div></div>
+<div class="dpad" aria-label="Movement controls"><button data-key="w" aria-label="Move up">W</button><button data-key="a" aria-label="Move left">A</button><button data-key="s" aria-label="Move down">S</button><button data-key="d" aria-label="Move right">D</button></div>
+<section class="overlay" id="intro"><div class="card">
+  <div class="eyebrow">AN ORIGINAL 2D PARRY GAME</div><h2>Own the<br><span>next heartbeat.</span></h2>
+  <p>A homing pulse hunts one contender at a time. Send it back with your energy blade. Every return makes it faster. One hit and you're out.</p>
+  <div class="rules"><div class="rule"><b>1</b><span>Red means it targets <strong>you</strong>. You can only parry when you are the target.</span></div><div class="rule"><b>2</b><span>Press <strong>Space / F</strong> or click inside the dashed ring. Press <strong>Q / Shift</strong> for your equipped ability.</span></div><div class="rule"><b>3</b><span>Earn <strong>20 coins per elimination you cause + 60 per win</strong>. Buy colors, models, and abilities in the shop.</span></div></div>
+  <button id="start" class="primary">PLAY WITH BOTS</button><button id="choose-online" class="secondary">PLAY ONLINE WITH FRIENDS</button><button class="secondary" data-open-shop>SKINS &amp; ABILITIES</button><p class="fine">Dash is free. Progress saves in this browser.</p>
+</div></section>
+<section class="overlay hidden" id="pause-overlay"><div class="card"><div class="eyebrow">TAKE A BREATH</div><h2>Pulse <span>paused.</span></h2><p>The ball and ability cooldowns are frozen.</p><button id="resume" class="primary">RESUME</button><button class="secondary" data-open-shop>SKINS &amp; ABILITIES</button><button id="retry" class="secondary">RESTART ROUND</button></div></section>
+<section class="overlay hidden" id="result"><div class="card"><div class="eyebrow" id="result-kicker">ROUND OVER</div><h2 id="result-title"></h2><p id="result-copy"></p><button id="again" class="primary">NEXT ROUND</button><button class="secondary" data-open-shop>SPEND COINS</button></div></section>
+<section class="overlay hidden" id="online-menu"><div class="card">
+  <div class="eyebrow">DIFFERENT COMPUTERS. SAME ARENA.</div><h2>Play <span>online.</span></h2>
+  <p>Create a private room and share its code or link. Up to six friends can join; bots fill the remaining slots.</p>
+  <label for="online-name">PLAYER NAME</label><input id="online-name" class="room-input" maxlength="16" value="PLAYER" autocomplete="nickname">
+  <button id="create-room" class="primary">CREATE ROOM</button>
+  <label for="join-code" style="display:block;margin-top:18px">FRIEND'S ROOM CODE</label><input id="join-code" class="room-input" maxlength="6" placeholder="ABC123" autocapitalize="characters" autocomplete="off">
+  <button id="join-room" class="secondary">JOIN ROOM</button><p id="online-message" class="online-message" role="status"></p>
+  <button id="online-back" class="secondary">BACK TO BOTS MODE</button>
+</div></section>
+<section class="overlay hidden" id="room-lobby"><div class="card">
+  <div class="eyebrow">PRIVATE ONLINE ROOM</div><h2>Invite <span>your friends.</span></h2>
+  <div id="room-code" class="room-code"></div><input id="room-link" class="room-input" aria-label="Room invite link" readonly>
+  <button id="copy-room" class="secondary">COPY INVITE LINK</button><ol id="room-members" class="room-members"></ol>
+  <p id="room-info"></p><button id="start-online" class="primary">START ROUND</button><button id="leave-lobby" class="secondary">LEAVE ROOM</button>
+</div></section>
+<section class="overlay hidden" id="shop"><div class="card shop-card">
+  <div class="shop-head"><div><div class="eyebrow">YOUR LOOK. YOUR PLAYSTYLE.</div><h2>Pulse shop</h2><div class="shop-balance"><span id="shop-coins">0</span> COINS</div></div><button id="close-shop" class="icon" aria-label="Close shop">X</button></div>
+  <p>Mix any owned color with any model. Equip one ability; Dash is yours for free. Cosmetics never change your hitbox.</p>
+  <div class="shop-tabs" aria-label="Shop categories"><button data-tab="colors" aria-pressed="true">COLORS</button><button data-tab="models" aria-pressed="false">MODELS</button><button data-tab="abilities" aria-pressed="false">ABILITIES</button></div>
+  <p id="shop-message" class="shop-message" role="status"></p><div id="shop-grid" class="shop-grid"></div>
+  <button id="reset-progress" class="secondary">RESET SAVED PROGRESS</button>
+  <div id="reset-confirm" class="reset-confirm hidden"><p>This removes all coins, wins, and purchases from this browser. Dash and the starter skin stay free.</p><button id="confirm-reset" class="secondary">YES, RESET EVERYTHING</button><button id="cancel-reset" class="secondary">CANCEL</button></div>
+</div></section>
+<p id="save-warning" class="save-warning hidden" role="alert"></p>
+<script>
+(() => {
+  'use strict';
+  const canvas = document.querySelector('#arena');
+  const ctx = canvas.getContext('2d');
+  if (!ctx) {
+    document.querySelector('#intro .card').innerHTML = '<h2>Canvas unavailable</h2><p>This game needs a browser with 2D canvas support. Try a current browser with graphics enabled.</p>';
+    return;
+  }
+  const ui = Object.fromEntries(['alive', 'rally', 'wins', 'coins', 'status', 'toast', 'parry', 'special', 'pause', 'intro', 'pause-overlay', 'result', 'result-kicker', 'result-title', 'result-copy', 'shop', 'shop-coins', 'shop-grid', 'shop-message', 'save-warning'].map(id => [id, document.getElementById(id)]));
+  const RADIUS = 280, PARRY_RADIUS = 64, HIT_RADIUS = 21;
+  const BASE_BALL_SPEED = 225;
+  const PARRY_COOLDOWN = .8, DASH_COOLDOWN = 2.6;
+  const names = ['YOU', 'NOVA', 'FLUX', 'ECHO', 'VEX', 'COMET'];
+  const colors = ['#69f3db', '#b6a1ff', '#ffb87c', '#79b8ff', '#ff85b3', '#ffe29a'];
+  const catalog = {
+    colors: [
+      { id: 'mint', name: 'Mint', color: '#69f3db', price: 0 },
+      { id: 'red', name: 'Crimson', color: '#ff4f5f', price: 40 },
+      { id: 'orange', name: 'Tangerine', color: '#ff9b42', price: 40 },
+      { id: 'blue', name: 'Ocean', color: '#59aaff', price: 50 },
+      { id: 'lime', name: 'Lime', color: '#b1f569', price: 50 },
+      { id: 'purple', name: 'Violet', color: '#b293ff', price: 60 },
+      { id: 'pink', name: 'Bubblegum', color: '#ff8ac7', price: 60 },
+      { id: 'white', name: 'Frost', color: '#e9f4ff', price: 70 },
+      { id: 'gold', name: 'Gold', color: '#ffe29a', price: 90 },
+      { id: 'dark', name: 'Obsidian', color: '#62718c', price: 90 }
+    ],
+    models: [
+      { id: 'pulse', name: 'Pulse', price: 0, description: 'The original energy contender.' },
+      { id: 'robot', name: 'Robot', price: 140, description: 'Steel panels, antenna, and glowing visor.' },
+      { id: 'bear', name: 'Bear', price: 160, description: 'Round ears, chunky paws, and a friendly muzzle.' },
+      { id: 'fox', name: 'Fox', price: 180, description: 'Pointed ears and a sweeping, white-tipped tail.' },
+      { id: 'dragon', name: 'Dragon', price: 240, description: 'Wings, horns, and a spiked tail.' }
+    ],
+    abilities: [
+      { id: 'dash', name: 'Dash', price: 0, cooldown: DASH_COOLDOWN, description: 'A quick burst in your aiming or movement direction. Free starter ability.' },
+      { id: 'shield', name: 'Shield', price: 120, cooldown: 8, description: 'For 3 seconds, automatically return the next ball that targets you. One hit only.' },
+      { id: 'chain', name: 'Chain', price: 160, cooldown: 7, description: 'Immediately pull a ball targeting someone else toward you. Get ready to parry!' },
+      { id: 'freeze', name: 'Freeze', price: 180, cooldown: 9, description: 'Stop the ball for 1.5 seconds. Contenders can still move.' },
+      { id: 'slow', name: 'Slow Motion', price: 200, cooldown: 8, description: 'Slow the ball to 45% speed for 3 seconds.' },
+      { id: 'blink', name: 'Blink', price: 220, cooldown: 6, description: 'Teleport 100 units in your aiming or movement direction. No invincibility.' },
+      { id: 'power', name: 'Power Strike', price: 240, cooldown: 8, description: 'For 6 seconds, your next manual parry adds 100 extra ball speed.' }
+    ]
+  };
+  const SAVE_KEY = 'pulse-arena-progress-v1';
+  const ownedKey = { colors: 'ownedColors', models: 'ownedModels', abilities: 'ownedAbilities' };
+  const equippedKey = { colors: 'color', models: 'model', abilities: 'ability' };
+  let saveBlocked = false, shopTab = 'colors', shopReturnPhase = 'intro', shopFocus = null;
+  const newProfile = () => ({ version: 1, coins: 0, wins: 0, ownedColors: ['mint'], ownedModels: ['pulse'], ownedAbilities: ['dash'], color: 'mint', model: 'pulse', ability: 'dash' });
+  let profile = loadProfile();
+  const keys = new Set(), touchKeys = new Map();
+  const state = { phase: 'intro', actors: [], ball: null, time: 0, countdown: 0, launch: 0, rally: 0, round: 0, roundCoins: 0, kills: 0, parries: 0, perfects: 0, particles: [], rings: [], trail: [], toastTime: 0, shake: 0, freeze: 0, slow: 0 };
+  let width = 0, height = 0, scale = 1, originX = 0, originY = 0, last = performance.now();
+  const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
+  const distance = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
+  const unit = (x, y) => { const length = Math.hypot(x, y) || 1; return { x: x / length, y: y / length }; };
+  const alive = () => state.actors.filter(actor => actor.alive);
+  const player = () => state.actors[0];
+  const net = { active: false, connecting: false, socket: null, code: '', you: null, frame: null, lastEvent: 0, coins: 0, wins: 0, roundBaseline: 0, playedRound: 0, lastSend: 0, aim: null, menu: false };
+  let socketLoader = null;
+
+  function loadSocketIO() {
+    if (window.io) return Promise.resolve();
+    if (!socketLoader) socketLoader = new Promise((resolve, reject) => {
+      const script = document.createElement('script');
+      script.src = 'https://cdn.socket.io/4.7.5/socket.io.min.js';
+      script.onload = () => resolve();
+      script.onerror = () => { script.remove(); socketLoader = null; reject(new Error('Could not load online networking. Check your internet connection; Bots mode still works.')); };
+      document.head.append(script);
+    });
+    return socketLoader;
+  }
+
+  function onlineLoadout() {
+    return { name: document.querySelector('#online-name').value.trim(), color: catalog.colors.find(item => item.id === profile.color).color, model: profile.model, ability: profile.ability };
+  }
+
+  function onlineCommand(command, data = {}) {
+    return new Promise((resolve, reject) => {
+      if (!net.socket?.connected) { reject(new Error('Not connected to the game server.')); return; }
+      net.socket.timeout(6000).emit('pulse_command', { command, data }, (error, response) => {
+        if (error) reject(new Error('The server did not respond. Check your connection.'));
+        else if (!response?.ok) reject(new Error(response?.error || 'The server rejected this request.'));
+        else resolve(response);
+      });
+    });
+  }
+
+  function onlineError(error) {
+    console.warn('Pulse online:', error);
+    document.querySelector('#online-message').textContent = error.message;
+    toast(error.message, 3);
+  }
+
+  function showOnlineMenu(message = '') {
+    ui.intro.classList.add('hidden');
+    document.querySelector('#online-menu').classList.remove('hidden');
+    document.querySelector('#online-message').textContent = message;
+    state.phase = 'online-menu'; clearInput(); updateHud();
+  }
+
+  async function joinOnline(create) {
+    if (net.connecting || net.active) return;
+    const createButton = document.querySelector('#create-room'), joinButton = document.querySelector('#join-room');
+    net.connecting = true; document.querySelector('#online-back').disabled = true;
+    createButton.disabled = joinButton.disabled = true;
+    document.querySelector('#online-message').textContent = 'Connecting to the server...';
+    try {
+      await loadSocketIO();
+      if (!net.socket?.connected) {
+        if (net.socket) net.socket.disconnect();
+        net.socket = window.io('/pulse', { reconnection: false, timeout: 10000 });
+        net.socket.on('pulse_state', snapshot => { if (net.active) applyOnlineState(snapshot); });
+        net.socket.on('disconnect', () => {
+          if (!net.active) return;
+          resetOnline();
+          showOnlineMenu('Disconnected from the room. Rejoin between rounds or create a new room. Your saved coins are safe.');
+        });
+        await new Promise((resolve, reject) => {
+          net.socket.once('connect', resolve);
+          net.socket.once('connect_error', () => reject(new Error('Cannot reach the online server. Check your connection or try again after the host wakes up.')));
+        });
+      }
+      const response = await onlineCommand(create ? 'create' : 'join', { ...onlineLoadout(), code: document.querySelector('#join-code').value.trim().toUpperCase() });
+      net.active = true; net.you = response.you; net.code = response.state.code;
+      net.coins = response.state.earned[net.you] || 0; net.wins = response.state.victories[net.you] || 0;
+      net.lastEvent = response.state.serial; net.playedRound = 0; net.frame = null; net.menu = false;
+      document.querySelector('#online-menu').classList.add('hidden');
+      document.querySelector('#exit-online').classList.remove('hidden');
+      applyOnlineState(response.state);
+    } catch (error) { onlineError(error); }
+    finally { net.connecting = false; document.querySelector('#online-back').disabled = false; createButton.disabled = joinButton.disabled = false; }
+  }
+
+  function resetOnline() {
+    net.active = false; net.menu = false; net.code = ''; net.you = null; net.frame = null; net.aim = null;
+    if (net.socket) net.socket.disconnect();
+    net.socket = null;
+    for (const id of ['online-menu', 'room-lobby', 'exit-online']) document.getElementById(id).classList.add('hidden');
+    ui.result.classList.add('hidden'); ui.shop.classList.add('hidden'); ui['pause-overlay'].classList.add('hidden');
+    state.actors = makeActors(); applyAppearance(); state.ball = null; state.particles = []; state.rings = []; state.trail = [];
+    state.rally = 0; state.phase = 'intro'; ui.intro.classList.remove('hidden'); clearInput(); updateHud();
+  }
+
+  async function leaveOnline() {
+    if (net.active) {
+      try { await onlineCommand('leave'); }
+      catch (error) { onlineError(error); }
+    }
+    resetOnline();
+  }
+
+  function renderLobby(snapshot) {
+    document.querySelector('#room-code').textContent = snapshot.code;
+    const link = new URL(location.href); link.search = ''; link.searchParams.set('room', snapshot.code);
+    document.querySelector('#room-link').value = link.href;
+    const list = document.querySelector('#room-members'); list.replaceChildren();
+    for (const member of snapshot.members) {
+      const item = document.createElement('li');
+      item.textContent = `${member.name}${member.slot === net.you ? ' (you)' : ''}${member.slot === snapshot.host ? ' - HOST' : ''}`;
+      list.append(item);
+    }
+    document.querySelector('#room-info').textContent = `${snapshot.members.length} players connected. ${6 - snapshot.members.length} bots will fill the arena. ${snapshot.host === net.you ? 'Start whenever your friends are ready.' : 'Waiting for the host to start.'}`;
+    document.querySelector('#start-online').disabled = snapshot.host !== net.you;
+  }
+
+  function applyOnlineState(snapshot) {
+    const previous = net.frame; net.frame = snapshot;
+    const coins = snapshot.earned[net.you] || 0, wins = snapshot.victories[net.you] || 0;
+    if (coins > net.coins || wins > net.wins) {
+      profile.coins += Math.max(0, coins - net.coins); profile.wins += Math.max(0, wins - net.wins);
+      saveProfile();
+    }
+    net.coins = coins; net.wins = wins;
+    if (snapshot.phase === 'countdown' && snapshot.round !== net.playedRound) {
+      net.playedRound = snapshot.round; net.roundBaseline = coins; net.aim = null; net.menu = false;
+      ui.result.classList.add('hidden'); ui.shop.classList.add('hidden'); ui['pause-overlay'].classList.add('hidden');
+      state.trail = []; state.particles = []; state.rings = []; canvas.focus({ preventScroll: true });
+    }
+    if (snapshot.actors.length) {
+      const order = [net.you, ...snapshot.actors.map(actor => actor.id).filter(id => id !== net.you)];
+      const mapId = id => order.indexOf(id);
+      state.actors = order.map(id => ({ ...snapshot.actors.find(actor => actor.id === id), id: mapId(id) }));
+      state.ball = { ...snapshot.ball, target: mapId(snapshot.ball.target), lastDefender: mapId(snapshot.ball.lastDefender) };
+      state.trail.push({ x: state.ball.x, y: state.ball.y }); if (state.trail.length > 18) state.trail.shift();
+      state.parries = player().parries; state.perfects = player().perfects; state.kills = player().kills;
+    } else state.ball = null;
+    state.time = snapshot.time; state.rally = snapshot.rally; state.countdown = snapshot.countdown;
+    state.launch = snapshot.launch; state.freeze = snapshot.freeze; state.slow = snapshot.slow; state.round = snapshot.round;
+    state.roundCoins = coins - net.roundBaseline;
+    const waiting = snapshot.phase === 'lobby' || (snapshot.phase === 'result' && snapshot.round !== net.playedRound);
+    renderLobby(snapshot);
+    document.querySelector('#room-lobby').classList.toggle('hidden', !waiting);
+    state.phase = net.menu ? (ui.shop.classList.contains('hidden') ? 'paused' : 'shop') : waiting ? 'lobby' : snapshot.phase;
+    for (const event of snapshot.events) {
+      if (event.serial <= net.lastEvent) continue;
+      net.lastEvent = event.serial;
+      if (event.kind !== 'start') burst(event.x, event.y, event.color, event.kind === 'eliminate' ? 30 : 12);
+      if (event.kind === 'eliminate') { state.trail = []; toast(event.message); }
+      else if (event.actor === net.you) toast(event.message);
+    }
+    if (snapshot.phase === 'countdown' && Math.ceil(previous?.countdown || 0) !== Math.ceil(snapshot.countdown)) toast(String(Math.ceil(snapshot.countdown)));
+    if (snapshot.phase === 'result' && snapshot.round === net.playedRound) {
+      if (previous?.phase !== 'result' || previous.round !== snapshot.round) {
+        net.menu = false; state.phase = 'result'; clearInput();
+        ui.shop.classList.add('hidden'); ui['pause-overlay'].classList.add('hidden'); ui.result.classList.remove('hidden');
+      }
+      const winner = snapshot.actors.find(actor => actor.id === snapshot.winner);
+      ui['result-kicker'].textContent = `ONLINE ROUND ${snapshot.round}`;
+      ui['result-title'].textContent = snapshot.winner === net.you ? 'PULSE CHAMPION.' : `${winner.name} WINS.`;
+      ui['result-copy'].textContent = `${state.parries} returns, ${state.perfects} perfect parries, ${state.kills} eliminations caused. +${state.roundCoins} coins this round.`;
+      document.querySelector('#again').disabled = snapshot.host !== net.you;
+      document.querySelector('#again').textContent = snapshot.host === net.you ? 'START NEXT ONLINE ROUND' : 'WAITING FOR HOST';
+    }
+    updateHud();
+  }
+
+  async function startOnlineRound() {
+    try { await onlineCommand('loadout', onlineLoadout()); await onlineCommand('start'); }
+    catch (error) { onlineError(error); }
+  }
+
+  function onlineAction(action) {
+    sendOnlineInput();
+    onlineCommand('action', { action }).catch(onlineError);
+  }
+
+  function sendOnlineInput() {
+    if (!net.active || !net.socket?.connected || net.frame?.phase !== 'playing') return;
+    const moving = state.phase === 'playing' && player().alive;
+    const x = moving ? Number(keys.has('d') || keys.has('ArrowRight')) - Number(keys.has('a') || keys.has('ArrowLeft')) : 0;
+    const y = moving ? Number(keys.has('s') || keys.has('ArrowDown')) - Number(keys.has('w') || keys.has('ArrowUp')) : 0;
+    const facing = x || y ? Math.atan2(y, x) : net.aim ?? player().facing;
+    net.socket.emit('pulse_command', { command: 'input', data: { x, y, facing } });
+  }
+
+  function saveError(error, message) {
+    console.error('Pulse Arena progress:', error);
+    ui['save-warning'].textContent = message;
+    ui['save-warning'].classList.remove('hidden');
+  }
+
+  function loadProfile() {
+    try {
+      const raw = localStorage.getItem(SAVE_KEY);
+      if (raw === null) return newProfile();
+      const saved = JSON.parse(raw);
+      if (!saved || saved.version !== 1 || !Number.isSafeInteger(saved.coins) || saved.coins < 0 || !Number.isSafeInteger(saved.wins) || saved.wins < 0) throw new Error('Invalid coin or win data');
+      for (const category of Object.keys(catalog)) {
+        const owned = saved[ownedKey[category]];
+        if (!Array.isArray(owned) || new Set(owned).size !== owned.length || owned.some(id => !catalog[category].some(item => item.id === id)) || !owned.includes(saved[equippedKey[category]])) throw new Error(`Invalid ${category} ownership`);
+        if (!owned.includes(catalog[category][0].id)) throw new Error(`Missing free ${category} item`);
+      }
+      return saved;
+    } catch (error) {
+      saveBlocked = true;
+      saveError(error, 'Saved progress could not be loaded. Playing with temporary progress; use Reset Saved Progress in the shop to recover.');
+      return newProfile();
+    }
+  }
+
+  function saveProfile() {
+    if (saveBlocked) return false;
+    try {
+      localStorage.setItem(SAVE_KEY, JSON.stringify(profile));
+      ui['save-warning'].classList.add('hidden');
+      return true;
+    } catch (error) {
+      saveError(error, 'Progress could not be saved. Keep this page open; coins and purchases are currently only in memory.');
+      return false;
+    }
+  }
+
+  function reward(amount) {
+    profile.coins += amount; state.roundCoins += amount;
+    saveProfile();
+  }
+
+  function applyAppearance() {
+    const human = player();
+    human.color = catalog.colors.find(item => item.id === profile.color).color;
+    human.model = profile.model;
+  }
+
+  function openShop() {
+    if (state.phase === 'shop') return;
+    if (net.connecting) { toast('Wait for the room connection to finish.', 2); return; }
+    if (net.active && ['playing', 'countdown'].includes(net.frame.phase)) { toast('Online rounds continue live. Use the shop between rounds.', 2); return; }
+    shopFocus = document.activeElement;
+    if (['playing', 'countdown'].includes(state.phase)) setPause(true);
+    shopReturnPhase = state.phase; state.phase = 'shop'; clearInput();
+    if (net.active) net.menu = true;
+    ui.shop.classList.remove('hidden'); ui['shop-message'].textContent = '';
+    renderShop(); updateHud(); document.querySelector('#close-shop').focus();
+  }
+
+  function closeShop() {
+    if (state.phase !== 'shop') return;
+    ui.shop.classList.add('hidden'); document.querySelector('#reset-confirm').classList.add('hidden');
+    state.phase = shopReturnPhase; updateHud();
+    if (net.active) net.menu = false;
+    if (shopFocus?.isConnected) shopFocus.focus();
+  }
+
+  function purchaseOrEquip(category, id) {
+    if (state.phase !== 'shop') return;
+    const item = catalog[category].find(entry => entry.id === id);
+    const owned = profile[ownedKey[category]];
+    if (!owned.includes(id)) {
+      if (profile.coins < item.price) { ui['shop-message'].textContent = `You need ${item.price - profile.coins} more coins for ${item.name}.`; return; }
+      profile.coins -= item.price; owned.push(id);
+    }
+    profile[equippedKey[category]] = id;
+    if (category === 'abilities') {
+      player().guard = 0; player().shield = 0; player().power = 0; player().dashTime = 0;
+    }
+    applyAppearance(); saveProfile();
+    if (net.active) onlineCommand('loadout', onlineLoadout()).catch(onlineError);
+    renderShop(); updateHud(); ui['shop-message'].textContent = `${item.name} equipped.`;
+  }
+
+  function renderShop() {
+    ui['shop-coins'].textContent = profile.coins;
+    document.querySelectorAll('[data-tab]').forEach(button => button.setAttribute('aria-pressed', String(button.dataset.tab === shopTab)));
+    ui['shop-grid'].replaceChildren();
+    for (const item of catalog[shopTab]) {
+      const owned = profile[ownedKey[shopTab]].includes(item.id), equipped = profile[equippedKey[shopTab]] === item.id;
+      const card = document.createElement('article'); card.className = `shop-item${equipped ? ' equipped' : ''}`;
+      const preview = document.createElement('canvas'); preview.width = 260; preview.height = 144;
+      preview.setAttribute('aria-label', `${item.name} preview`);
+      const painter = preview.getContext('2d');
+      if (painter) {
+        const color = shopTab === 'colors' ? item.color : catalog.colors.find(entry => entry.id === profile.color).color;
+        if (shopTab === 'abilities') {
+          painter.fillStyle = '#69f3db'; painter.font = '900 28px system-ui'; painter.textAlign = 'center'; painter.fillText(item.name.toUpperCase(), 130, 68);
+        } else {
+          painter.save(); painter.translate(130, 72); painter.scale(2, 2);
+          drawModel(painter, shopTab === 'models' ? item.id : profile.model, color, 0, 0, -Math.PI / 2); painter.restore();
+        }
+      }
+      const heading = document.createElement('h3'); heading.textContent = item.name;
+      const description = document.createElement('p'); description.textContent = item.description || `${item.name} color. Works with every model.`;
+      const button = document.createElement('button'); button.dataset.item = item.id;
+      button.textContent = equipped ? 'EQUIPPED' : owned ? 'EQUIP' : `BUY - ${item.price} COINS`;
+      button.disabled = equipped || (!owned && profile.coins < item.price);
+      button.onclick = () => purchaseOrEquip(shopTab, item.id);
+      card.append(preview, heading, description, button); ui['shop-grid'].append(card);
+    }
+  }
+
+  function resize() {
+    width = innerWidth; height = innerHeight;
+    const dpr = Math.min(devicePixelRatio || 1, 2);
+    canvas.width = Math.round(width * dpr); canvas.height = Math.round(height * dpr);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    const top = width <= 640 ? 155 : height < 500 ? 98 : 140;
+    const bottom = matchMedia('(pointer:coarse)').matches ? 165 : height < 500 ? 70 : 125;
+    scale = Math.max(.1, Math.min((width - 32) / 640, (height - top - bottom) / 640));
+    originX = width / 2; originY = top + Math.max(0, height - top - bottom) / 2;
+  }
+
+  function clearInput() {
+    keys.clear(); touchKeys.clear();
+    document.querySelectorAll('.dpad button').forEach(button => button.classList.remove('active'));
+  }
+
+  function makeActors() {
+    return names.map((name, id) => {
+      const angle = Math.PI / 2 + id * Math.PI / 3;
+      return { id, name, color: colors[id], model: 'pulse', x: Math.cos(angle) * 205, y: Math.sin(angle) * 205, facing: angle + Math.PI,
+        alive: true, guard: 0, cooldown: 0, abilityCooldown: 0, shield: 0, power: 0, dashTime: 0, dashX: 0, dashY: 0,
+        flash: 0, botAngle: angle, botDecision: false, botWillParry: true };
+    });
+  }
+
+  function toast(message, seconds = .9) {
+    ui.toast.textContent = message; state.toastTime = seconds; ui.toast.classList.add('visible');
+  }
+
+  function start() {
+    if (net.active) { startOnlineRound(); return; }
+    clearInput();
+    state.actors = makeActors();
+    applyAppearance();
+    state.ball = { x: 0, y: 0, target: 0, speed: BASE_BALL_SPEED, vx: 0, vy: 1, lastDefender: -1 };
+    state.rally = 0; state.parries = 0; state.perfects = 0; state.time = 0; state.roundCoins = 0; state.kills = 0; state.freeze = 0; state.slow = 0;
+    state.countdown = 3; state.launch = 0; state.round++; state.phase = 'countdown';
+    state.particles = []; state.rings = []; state.trail = []; state.shake = 0;
+    ui.intro.classList.add('hidden'); ui.result.classList.add('hidden'); ui['pause-overlay'].classList.add('hidden');
+    document.querySelector('#again').disabled = false; document.querySelector('#again').textContent = 'NEXT ROUND';
+    toast('3', 1);
+    canvas.focus({ preventScroll: true });
+    updateHud();
+  }
+
+  function setPause(paused) {
+    if (net.active) {
+      if (!['countdown', 'playing', 'paused'].includes(state.phase)) return;
+      net.menu = paused; clearInput(); sendOnlineInput();
+      state.phase = paused ? 'paused' : net.frame.phase;
+      ui['pause-overlay'].classList.toggle('hidden', !paused);
+      ui['pause-overlay'].querySelector('p').textContent = 'This online round keeps running. You can resume or use LEAVE to exit the room.';
+      updateHud(); return;
+    }
+    if (paused && !['playing', 'countdown'].includes(state.phase)) return;
+    if (!paused && state.phase !== 'paused') return;
+    if (paused) { state.resumePhase = state.phase; state.phase = 'paused'; }
+    else state.phase = state.resumePhase;
+    clearInput();
+    ui['pause-overlay'].classList.toggle('hidden', !paused);
+    ui['pause-overlay'].querySelector('p').textContent = 'The ball and ability cooldowns are frozen.';
+    if (paused) document.querySelector('#resume').focus();
+    else canvas.focus({ preventScroll: true });
+    updateHud();
+  }
+
+  function burst(x, y, color, count = 20) {
+    for (let i = 0; i < count; i++) {
+      const angle = Math.random() * Math.PI * 2, speed = 60 + Math.random() * 240;
+      state.particles.push({ x, y, vx: Math.cos(angle) * speed, vy: Math.sin(angle) * speed, life: .5 + Math.random() * .4, color });
+    }
+    state.rings.push({ x, y, radius: 14, life: .5, color });
+  }
+
+  function finish(won) {
+    if (state.phase !== 'playing') return;
+    state.phase = 'result'; clearInput();
+    if (won) { profile.wins++; reward(60); burst(player().x, player().y, '#ffe29a', 60); }
+    ui['result-kicker'].textContent = won ? 'LAST CONTENDER STANDING' : `ROUND ${state.round} COMPLETE`;
+    ui['result-title'].textContent = won ? 'PULSE CHAMPION.' : 'PULSE BROKEN.';
+    const place = alive().length + 1;
+    ui['result-copy'].textContent = `${won ? 'You outlasted all five rivals.' : `You finished ${place}${place === 2 ? 'nd' : place === 3 ? 'rd' : 'th'}. Wait for the ball to enter your ring before parrying.`} ${state.parries} returns, ${state.perfects} perfect parries, ${state.kills} eliminations caused. +${state.roundCoins} coins this round.`;
+    ui.result.classList.remove('hidden'); ui.toast.classList.remove('visible');
+    document.querySelector('#again').focus();
+    updateHud();
+  }
+
+  function activateParry(actor) {
+    if (state.phase !== 'playing' || !actor.alive || actor.cooldown > 0 || state.ball.target !== actor.id) return false;
+    if (net.active) { onlineAction('parry'); return true; }
+    actor.guard = .25; actor.cooldown = PARRY_COOLDOWN;
+    return true;
+  }
+
+  function activateAbility() {
+    const actor = player();
+    if (state.phase !== 'playing' || !actor.alive || actor.abilityCooldown > 0) return false;
+    if (net.active) { onlineAction('ability'); return true; }
+    const ability = catalog.abilities.find(item => item.id === profile.ability);
+    if (!profile.ownedAbilities.includes(ability.id) || (ability.id === 'chain' && state.ball.target === 0)) return false;
+    actor.abilityCooldown = ability.cooldown;
+    if (ability.id === 'dash') {
+      actor.dashX = Math.cos(actor.facing); actor.dashY = Math.sin(actor.facing); actor.dashTime = .16;
+    } else if (ability.id === 'shield') actor.shield = 3;
+    else if (ability.id === 'chain') {
+      retarget(actor); state.launch = 0;
+      burst(state.ball.x, state.ball.y, '#ffe29a'); toast('CHAIN - PULSE TARGETS YOU');
+    } else if (ability.id === 'freeze') state.freeze = 1.5;
+    else if (ability.id === 'slow') state.slow = 3;
+    else if (ability.id === 'blink') {
+      actor.x += Math.cos(actor.facing) * 100; actor.y += Math.sin(actor.facing) * 100;
+      const radius = Math.hypot(actor.x, actor.y);
+      if (radius > RADIUS - 18) { actor.x *= (RADIUS - 18) / radius; actor.y *= (RADIUS - 18) / radius; }
+    } else if (ability.id === 'power') actor.power = 6;
+    burst(actor.x, actor.y, actor.color, 8);
+    return true;
+  }
+
+  function chooseTarget(defender) {
+    const others = alive().filter(actor => actor.id !== defender.id);
+    if (defender.id === 0) {
+      return others.sort((a, b) => {
+        const angleA = Math.atan2(a.y - defender.y, a.x - defender.x);
+        const angleB = Math.atan2(b.y - defender.y, b.x - defender.x);
+        return Math.cos(angleB - defender.facing) - Math.cos(angleA - defender.facing);
+      })[0];
+    }
+    return others[Math.floor(Math.random() * others.length)];
+  }
+
+  function retarget(target) {
+    // A lock change cancels old parry windows; shields wait for their own target.
+    state.actors.forEach(actor => { actor.guard = 0; });
+    state.ball.target = target.id;
+    target.botDecision = false;
+    target.botWillParry = Math.random() < Math.max(.68, .94 - state.rally * .008);
+    const direction = unit(target.x - state.ball.x, target.y - state.ball.y);
+    state.ball.vx = direction.x; state.ball.vy = direction.y;
+    state.trail = [];
+  }
+
+  function deflect(actor, separation) {
+    if (state.phase !== 'playing' || !actor.alive || state.ball.target !== actor.id) return;
+    const shielded = actor.shield > 0 && actor.guard <= 0;
+    const perfect = !shielded && separation < 40;
+    actor.guard = 0; actor.flash = .3;
+    actor.shield = 0;
+    if (perfect) actor.cooldown = .25;
+    state.rally++;
+    const power = !shielded && actor.power > 0 ? 100 : 0;
+    if (!shielded) actor.power = 0;
+    state.ball.speed = Math.min(1080, state.ball.speed + (perfect ? 36 : 24) + power);
+    state.ball.lastDefender = actor.id;
+    burst(state.ball.x, state.ball.y, perfect ? '#ffe29a' : actor.color);
+    state.shake = perfect ? 5 : 2;
+    if (actor.id === 0) {
+      state.parries++; if (perfect) state.perfects++;
+      toast(shielded ? 'SHIELD RETURN' : power ? 'POWER RETURN' : perfect ? 'PERFECT RETURN' : 'DEFLECTED');
+    }
+    const target = chooseTarget(actor);
+    if (target) retarget(target);
+  }
+
+  function eliminate(actor) {
+    if (state.phase !== 'playing' || !actor.alive) return;
+    actor.alive = false;
+    state.ball.speed = BASE_BALL_SPEED;
+    burst(actor.x, actor.y, actor.color, 35); state.shake = 9;
+    if (actor.id === 0) { finish(false); return; }
+    const credited = state.ball.lastDefender === 0;
+    if (credited) { state.kills++; reward(20); }
+    toast(`${actor.name} ELIMINATED${credited ? ' +20 COINS' : ''}`);
+    if (alive().length === 1) { finish(true); return; }
+    const target = alive()[Math.floor(Math.random() * alive().length)];
+    state.ball.x = 0; state.ball.y = 0; state.ball.lastDefender = -1; state.launch = .9;
+    retarget(target);
+  }
+
+  // Swept distance prevents a fast ball from skipping shields or hitboxes.
+  function segmentDistance(ax, ay, bx, by, target) {
+    const dx = bx - ax, dy = by - ay, lengthSquared = dx * dx + dy * dy;
+    const t = lengthSquared === 0 ? 0 : clamp(((target.x - ax) * dx + (target.y - ay) * dy) / lengthSquared, 0, 1);
+    return Math.hypot(ax + dx * t - target.x, ay + dy * t - target.y);
+  }
+
+  function updateActors(dt) {
+    const human = player();
+    let mx = Number(keys.has('d') || keys.has('ArrowRight')) - Number(keys.has('a') || keys.has('ArrowLeft'));
+    let my = Number(keys.has('s') || keys.has('ArrowDown')) - Number(keys.has('w') || keys.has('ArrowUp'));
+    if (mx || my) { const move = unit(mx, my); mx = move.x; my = move.y; human.facing = Math.atan2(my, mx); }
+    for (const actor of alive()) {
+      actor.guard = Math.max(0, actor.guard - dt); actor.cooldown = Math.max(0, actor.cooldown - dt);
+      actor.abilityCooldown = Math.max(0, actor.abilityCooldown - dt); actor.flash = Math.max(0, actor.flash - dt);
+      actor.shield = Math.max(0, actor.shield - dt); actor.power = Math.max(0, actor.power - dt);
+      if (actor.id === 0) {
+        if (actor.dashTime > 0) {
+          actor.x += actor.dashX * 650 * dt; actor.y += actor.dashY * 650 * dt;
+          actor.dashTime = Math.max(0, actor.dashTime - dt);
+        } else { actor.x += mx * 170 * dt; actor.y += my * 170 * dt; }
+      } else {
+        actor.botAngle += dt * (actor.id % 2 ? .19 : -.17);
+        const radius = 170 + Math.sin(state.time * .8 + actor.id) * 35;
+        const goalX = Math.cos(actor.botAngle) * radius, goalY = Math.sin(actor.botAngle) * radius;
+        const move = unit(goalX - actor.x, goalY - actor.y);
+        if (Math.hypot(goalX - actor.x, goalY - actor.y) > 3) {
+          actor.x += move.x * 95 * dt; actor.y += move.y * 95 * dt;
+        }
+        actor.facing = Math.atan2(state.ball.y - actor.y, state.ball.x - actor.x);
+        if (state.ball.target === actor.id && state.launch <= 0 && state.freeze <= 0 && !actor.botDecision) {
+          const arrival = (distance(actor, state.ball) - HIT_RADIUS) / (state.ball.speed * (state.slow > 0 ? .45 : 1));
+          if (arrival < .13) { actor.botDecision = true; if (actor.botWillParry) activateParry(actor); }
+        }
+      }
+      const radius = Math.hypot(actor.x, actor.y);
+      if (radius > RADIUS - 18) { actor.x *= (RADIUS - 18) / radius; actor.y *= (RADIUS - 18) / radius; }
+    }
+  }
+
+  function step(dt) {
+    state.time += dt;
+    const frozen = state.freeze > 0, slowed = state.slow > 0;
+    state.freeze = Math.max(0, state.freeze - dt); state.slow = Math.max(0, state.slow - dt);
+    if (state.launch > 0) { state.launch = Math.max(0, state.launch - dt); updateActors(dt); return; }
+    updateActors(dt);
+    if (frozen) return;
+    const ball = state.ball, target = state.actors[ball.target];
+    const direction = unit(target.x - ball.x, target.y - ball.y);
+    const oldX = ball.x, oldY = ball.y;
+    ball.vx = direction.x; ball.vy = direction.y;
+    const speed = ball.speed * (slowed ? .45 : 1);
+    ball.x += direction.x * speed * dt; ball.y += direction.y * speed * dt;
+    const separation = segmentDistance(oldX, oldY, ball.x, ball.y, target);
+    if ((target.guard > 0 || target.shield > 0) && separation <= PARRY_RADIUS) deflect(target, separation);
+    else if (separation <= HIT_RADIUS) eliminate(target);
+  }
+
+  function update(dt) {
+    if (!net.active && (state.phase === 'paused' || state.phase === 'shop')) return;
+    state.toastTime = Math.max(0, state.toastTime - dt);
+    if (state.toastTime === 0) ui.toast.classList.remove('visible');
+    state.shake = Math.max(0, state.shake - dt * 30);
+    for (const particle of state.particles) { particle.life -= dt; particle.x += particle.vx * dt; particle.y += particle.vy * dt; particle.vx *= Math.exp(-dt * 2); particle.vy *= Math.exp(-dt * 2); }
+    state.particles = state.particles.filter(p => p.life > 0);
+    for (const ring of state.rings) { ring.life -= dt; ring.radius += dt * 190; }
+    state.rings = state.rings.filter(r => r.life > 0);
+    if (net.active) { updateHud(); return; }
+    if (state.phase === 'countdown') {
+      const previous = Math.ceil(state.countdown);
+      state.countdown = Math.max(0, state.countdown - dt);
+      if (state.countdown === 0) { state.phase = 'playing'; state.launch = .55; toast('STAY SHARP', .6); }
+      else if (Math.ceil(state.countdown) !== previous) toast(String(Math.ceil(state.countdown)), 1);
+    } else if (state.phase === 'playing') {
+      // Small simulation steps keep timing consistent on slow and fast displays.
+      let remaining = dt;
+      while (remaining > 0 && state.phase === 'playing') {
+        const slice = Math.min(remaining, 1 / 120); step(slice); remaining -= slice;
+      }
+      state.trail.push({ x: state.ball.x, y: state.ball.y });
+      if (state.trail.length > 18) state.trail.shift();
+    }
+    updateHud();
+  }
+
+  function updateHud() {
+    const human = player(), playing = state.phase === 'playing' && human.alive;
+    ui.alive.textContent = alive().length; ui.rally.textContent = state.rally; ui.wins.textContent = profile.wins; ui.coins.textContent = profile.coins;
+    ui.pause.disabled = !['playing', 'countdown', 'paused'].includes(state.phase);
+    document.querySelector('#retry').classList.toggle('hidden', net.active);
+    const ability = catalog.abilities.find(item => item.id === (net.active ? human.ability || profile.ability : profile.ability));
+    for (const [button, cooldown, duration, label] of [[ui.parry, human?.cooldown || 0, PARRY_COOLDOWN, 'PARRY'], [ui.special, human?.abilityCooldown || 0, ability.cooldown, ability.name.toUpperCase()]]) {
+      button.disabled = !playing || cooldown > 0 || (button === ui.parry && state.ball.target !== 0) || (button === ui.special && ability.id === 'chain' && state.ball.target === 0);
+      button.querySelector('.label').textContent = cooldown > 0 ? `${label} ${cooldown.toFixed(1)}s` : label;
+      button.querySelector('.bar').style.width = `${clamp(1 - cooldown / duration, 0, 1) * 100}%`;
+    }
+    const danger = playing && state.ball.target === 0;
+    ui.status.classList.toggle('threat', danger);
+    if (state.phase === 'countdown') ui.status.textContent = `GET READY - ${catalog.colors.find(item => item.id === profile.color).name.toUpperCase()} ${catalog.models.find(item => item.id === profile.model).name.toUpperCase()}`;
+    else if (danger) ui.status.textContent = state.launch > 0 ? 'THE PULSE IS LOCKING ONTO YOU' : 'TARGET: YOU - PARRY INSIDE YOUR RING';
+    else if (playing) ui.status.textContent = `TARGET: ${state.actors[state.ball.target].name} - STAY READY`;
+    else if (state.phase === 'paused') ui.status.textContent = 'PAUSED';
+    else if (net.active && state.phase === 'playing' && !human.alive) ui.status.textContent = 'ELIMINATED - SPECTATING THE ROUND';
+    else ui.status.textContent = 'A single ball. Six contenders. One survivor.';
+  }
+
+  function circle(x, y, radius, fill, stroke, lineWidth = 1) {
+    ctx.beginPath(); ctx.arc(x, y, radius, 0, Math.PI * 2);
+    if (fill) { ctx.fillStyle = fill; ctx.fill(); }
+    if (stroke) { ctx.strokeStyle = stroke; ctx.lineWidth = lineWidth; ctx.stroke(); }
+  }
+
+  function drawModel(painter, model, color, x, y, facing, flash = false) {
+    painter.save(); painter.translate(x, y); painter.rotate(facing + Math.PI / 2);
+    painter.shadowBlur = 0;
+    const outline = '#0b1729', cream = '#fff0d6';
+    const coat = painter.createLinearGradient(-16, -24, 18, 23);
+    coat.addColorStop(0, '#edfaff'); coat.addColorStop(.25, flash ? '#fff' : color); coat.addColorStop(1, '#264359');
+    const metal = painter.createLinearGradient(-12, -15, 12, 18);
+    metal.addColorStop(0, '#eef8ff'); metal.addColorStop(.5, '#809aad'); metal.addColorStop(1, '#34495d');
+    const ellipse = (dx, dy, rx, ry, fill, stroke = outline, width = 1.2) => {
+      painter.beginPath(); painter.ellipse(dx, dy, rx, ry, 0, 0, Math.PI * 2);
+      painter.fillStyle = fill; painter.fill();
+      if (stroke) { painter.strokeStyle = stroke; painter.lineWidth = width; painter.stroke(); }
+    };
+    const polygon = (points, fill, stroke = outline) => {
+      painter.beginPath(); points.forEach(([dx, dy], i) => i ? painter.lineTo(dx, dy) : painter.moveTo(dx, dy));
+      painter.closePath(); painter.fillStyle = fill; painter.fill();
+      if (stroke) { painter.strokeStyle = stroke; painter.lineWidth = 1.2; painter.stroke(); }
+    };
+    const line = (points, stroke, width = 1) => {
+      painter.beginPath(); points.forEach(([dx, dy], i) => i ? painter.lineTo(dx, dy) : painter.moveTo(dx, dy));
+      painter.strokeStyle = stroke; painter.lineWidth = width; painter.lineCap = 'round'; painter.lineJoin = 'round'; painter.stroke();
+    };
+    const eye = (dx, dy, iris = '#253041') => {
+      ellipse(dx, dy, 2.8, 3.3, cream);
+      ellipse(dx + .3, dy, 1.7, 2.5, iris, null);
+      ellipse(dx - .4, dy - 1, .65, .8, '#fff', null);
+    };
+
+    if (model === 'pulse') {
+      for (let i = 0; i < 4; i++) {
+        painter.save(); painter.rotate(i * Math.PI / 2);
+        polygon([[-5, -11], [-4, -18], [4, -18], [5, -11]], metal); painter.restore();
+      }
+      ellipse(0, 0, 14, 14, coat);
+      ellipse(0, 0, 10, 10, '#152c41', '#c1e9ee', 1.5);
+      const core = painter.createRadialGradient(-2, -3, 0, 0, 0, 7);
+      core.addColorStop(0, '#fff'); core.addColorStop(.4, '#c9fff3'); core.addColorStop(1, color);
+      ellipse(0, 0, 6.5, 6.5, core, null);
+      for (let i = 0; i < 3; i++) {
+        const angle = i * Math.PI * 2 / 3;
+        ellipse(Math.sin(angle) * 12, Math.cos(angle) * 12, 1, 1, '#fff', null);
+      }
+      line([[-9, -8], [-5, -11], [0, -12]], '#ffffffa0', 1.5);
+    } else if (model === 'robot') {
+      line([[0, -13], [0, -22], [5, -25]], metal, 2);
+      ellipse(5, -25, 3.2, 3.2, color);
+      ellipse(4.3, -26, 1.1, 1.1, '#fff', null);
+      for (const side of [-1, 1]) {
+        polygon([[side * 12, -6], [side * 20, -6], [side * 22, 9], [side * 13, 11]], metal);
+        line([[side * 17, -2], [side * 17, 6]], '#1e3345', 2);
+        ellipse(side * 17, 9, 2.3, 2.3, '#233c52', '#a9c4d4');
+      }
+      polygon([[-10, -15], [10, -15], [15, -10], [15, 10], [10, 15], [-10, 15], [-15, 10], [-15, -10]], coat);
+      polygon([[-10, -10], [10, -10], [11, 0], [-11, 0]], '#11283a', '#aacad7');
+      for (const side of [-1, 1]) {
+        ellipse(side * 5, -5, 3.2, 2, '#69f3db', null);
+        line([[side * 6, -5.5], [side * 4, -5.5]], '#fff', .8);
+        ellipse(side * 10, 11, 1.3, 1.3, metal);
+      }
+      line([[-6, 4], [6, 4]], '#d5f0f3', 1.5);
+      for (let i = -4; i <= 4; i += 4) line([[i, 7], [i, 10]], '#183044', 1.4);
+      line([[-10, -12], [8, -12]], '#ffffff90');
+    } else if (model === 'bear') {
+      for (const side of [-1, 1]) {
+        ellipse(side * 11, -12, 7, 7, coat);
+        ellipse(side * 11, -12, 3.5, 4, '#e7bdaf', null);
+        ellipse(side * 15, 10, 6.5, 7, coat);
+        ellipse(side * 15, 12, 3.2, 3, '#6b5866', null);
+        for (let toe = -1; toe <= 1; toe++) ellipse(side * 15 + toe * 2.3, 7, .9, 1.1, '#6b5866', null);
+      }
+      ellipse(0, 1, 14, 15, coat);
+      ellipse(0, 4, 9.5, 8, cream, '#bfa78e', .8);
+      eye(-5.5, -4); eye(5.5, -4);
+      ellipse(0, 1, 3.5, 2.4, '#2b2530');
+      ellipse(-.8, .3, 1, .5, '#ffffff90', null);
+      line([[0, 3], [0, 5], [-3, 6]], '#6a4b45');
+      line([[0, 5], [3, 6]], '#6a4b45');
+      line([[-3, -11], [-1, -13], [0, -10], [3, -12]], '#ffffff90', 1.2);
+      ellipse(-10, 2, 2.1, 1.2, '#ffb2aa70', null); ellipse(10, 2, 2.1, 1.2, '#ffb2aa70', null);
+    } else if (model === 'fox') {
+      painter.beginPath(); painter.moveTo(-6, 9);
+      painter.bezierCurveTo(-27, 13, -30, 32, -10, 31);
+      painter.bezierCurveTo(-6, 28, 5, 17, 5, 10); painter.closePath();
+      painter.fillStyle = coat; painter.fill(); painter.strokeStyle = outline; painter.lineWidth = 1.2; painter.stroke();
+      painter.beginPath(); painter.moveTo(-24, 25);
+      painter.bezierCurveTo(-21, 30, -16, 33, -10, 31);
+      painter.lineTo(-6, 25); painter.quadraticCurveTo(-15, 28, -18, 21); painter.closePath();
+      painter.fillStyle = cream; painter.fill();
+      for (const side of [-1, 1]) {
+        polygon([[side * 3, -10], [side * 14, -28], [side * 14, -3]], coat);
+        polygon([[side * 7, -11], [side * 12, -23], [side * 11, -7]], '#eeb3aa', null);
+      }
+      ellipse(0, 4, 11, 13, coat);
+      polygon([[-11, -8], [0, -15], [11, -8], [15, 4], [5, 12], [0, 15], [-5, 12], [-15, 4]], coat);
+      polygon([[-13, 3], [-6, 0], [0, 7], [-2, 13], [-8, 9]], cream, null);
+      polygon([[13, 3], [6, 0], [0, 7], [2, 13], [8, 9]], cream, null);
+      eye(-5, -3, '#5c382b'); eye(5, -3, '#5c382b');
+      polygon([[-3, 6], [3, 6], [0, 9]], '#232836');
+      line([[0, 9], [0, 11]], '#4f3940');
+      for (const side of [-1, 1]) {
+        line([[side * 7, 5], [side * 15, 6]], '#ffffffa0', .7);
+        line([[side * 7, 7], [side * 14, 9]], '#ffffffa0', .7);
+      }
+      line([[-3, -10], [0, -12], [3, -10]], '#ffffff90');
+    } else if (model === 'dragon') {
+      for (const side of [-1, 1]) {
+        painter.beginPath(); painter.moveTo(side * 8, 3);
+        painter.quadraticCurveTo(side * 15, -14, side * 29, -20);
+        painter.lineTo(side * 27, -3); painter.quadraticCurveTo(side * 20, -6, side * 24, 9);
+        painter.quadraticCurveTo(side * 16, 4, side * 13, 15); painter.closePath();
+        painter.fillStyle = coat; painter.fill(); painter.strokeStyle = outline; painter.lineWidth = 1.5; painter.stroke();
+        line([[side * 10, 3], [side * 29, -20], [side * 27, -3]], '#c5f3eb', 1.1);
+        line([[side * 10, 3], [side * 22, -5]], '#203f51');
+        line([[side * 10, 3], [side * 23, 8]], '#203f51');
+      }
+      painter.beginPath(); painter.moveTo(-6, 9);
+      painter.bezierCurveTo(-9, 21, 8, 22, 0, 33);
+      painter.bezierCurveTo(15, 25, 8, 12, 5, 8); painter.closePath();
+      painter.fillStyle = coat; painter.fill(); painter.strokeStyle = outline; painter.stroke();
+      polygon([[5, 19], [12, 21], [5, 24]], '#ffe29a');
+      ellipse(0, 4, 11, 14, coat);
+      ellipse(0, 6, 5, 10, '#ead5a4', '#baad87', .8);
+      for (let i = 0; i < 3; i++) line([[-3, 2 + i * 5], [3, 2 + i * 5]], '#a79874', .8);
+      for (const side of [-1, 1]) {
+        polygon([[side * 5, -12], [side * 11, -28], [side * 12, -17], [side * 10, -8]], '#ffe29a');
+        line([[side * 9, -17], [side * 11, -22]], '#aa865b', .8);
+      }
+      ellipse(0, -7, 12, 11, coat);
+      polygon([[-11, -14], [-6, -18], [-3, -14]], color);
+      polygon([[11, -14], [6, -18], [3, -14]], color);
+      eye(-6, -10, '#ab651e'); eye(6, -10, '#ab651e');
+      ellipse(0, -1, 8, 5, coat);
+      ellipse(-3, -3, 1.1, .8, outline, null); ellipse(3, -3, 1.1, .8, outline, null);
+      line([[-5, 1], [0, 2], [5, 1]], outline);
+      polygon([[-5, 1], [-3, 1], [-4, 4]], cream, null);
+      polygon([[5, 1], [3, 1], [4, 4]], cream, null);
+      for (const side of [-1, 1]) {
+        for (let i = 0; i < 3; i++) ellipse(side * 8, 4 + i * 3, 1.3, .8, '#ffffff60', null);
+      }
+    }
+    painter.restore();
+  }
+
+  function drawActor(actor) {
+    if (!actor.alive) {
+      ctx.globalAlpha = .25; ctx.strokeStyle = actor.color; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.moveTo(actor.x - 8, actor.y - 8); ctx.lineTo(actor.x + 8, actor.y + 8);
+      ctx.moveTo(actor.x + 8, actor.y - 8); ctx.lineTo(actor.x - 8, actor.y + 8); ctx.stroke(); ctx.globalAlpha = 1; return;
+    }
+    const targeted = state.ball?.target === actor.id && state.phase !== 'intro';
+    if (actor.id === 0) {
+      ctx.setLineDash([4, 7]); circle(actor.x, actor.y, PARRY_RADIUS, null, targeted ? '#ff668a80' : '#69f3db38', 1.5); ctx.setLineDash([]);
+      if (targeted) circle(actor.x, actor.y, 40, null, '#ffe29a35');
+    }
+    if (actor.shield > 0) circle(actor.x, actor.y, PARRY_RADIUS + 6, '#79b8ff15', '#79b8ff', 3);
+    if (actor.power > 0) circle(actor.x, actor.y, 20, null, '#ffe29a', 3);
+    if (actor.guard > 0) {
+      ctx.shadowColor = actor.color; ctx.shadowBlur = 18;
+      circle(actor.x, actor.y, PARRY_RADIUS, `${actor.color}20`, actor.color, 3); ctx.shadowBlur = 0;
+    }
+    circle(actor.x + 3, actor.y + 7, 17, '#0006');
+    if (targeted) {
+      circle(actor.x, actor.y, 25 + Math.sin(state.time * 10) * 2, null, actor.id === 0 ? '#ff668a' : '#ffffff60', 2);
+    }
+    ctx.shadowColor = actor.color; ctx.shadowBlur = actor.flash > 0 ? 25 : 10;
+    drawModel(ctx, actor.model, actor.color, actor.x, actor.y, actor.facing, actor.flash > 0); ctx.shadowBlur = 0;
+    ctx.save(); ctx.translate(actor.x, actor.y); ctx.rotate(actor.facing);
+    ctx.fillStyle = actor.color; ctx.beginPath(); ctx.moveTo(19, 0); ctx.lineTo(29, -4); ctx.lineTo(37, 0); ctx.lineTo(29, 4); ctx.closePath(); ctx.fill();
+    ctx.restore();
+    ctx.font = `700 ${actor.id === 0 ? 12 : 10}px system-ui`; ctx.textAlign = 'center'; ctx.fillStyle = actor.id === 0 ? '#eef5ff' : '#93a4bc';
+    ctx.fillText(actor.name, actor.x, actor.y + 39);
+  }
+
+  function draw() {
+    ctx.fillStyle = '#090d19'; ctx.fillRect(0, 0, width, height);
+    const background = ctx.createRadialGradient(originX, originY, 0, originX, originY, Math.max(width, height) * .65);
+    background.addColorStop(0, '#1a2b40'); background.addColorStop(1, '#090d19');
+    ctx.fillStyle = background; ctx.fillRect(0, 0, width, height);
+    ctx.save(); ctx.translate(originX + (Math.random() - .5) * state.shake, originY + (Math.random() - .5) * state.shake); ctx.scale(scale, scale);
+    circle(0, 0, RADIUS + 21, '#0e1625', '#25364d', 2);
+    circle(0, 0, RADIUS, '#132237', '#4a6a85', 2);
+    ctx.save(); ctx.beginPath(); ctx.arc(0, 0, RADIUS - 2, 0, Math.PI * 2); ctx.clip();
+    ctx.strokeStyle = '#ffffff05'; ctx.lineWidth = 1;
+    for (let pos = -280; pos <= 280; pos += 35) {
+      ctx.beginPath(); ctx.moveTo(pos, -280); ctx.lineTo(pos, 280); ctx.moveTo(-280, pos); ctx.lineTo(280, pos); ctx.stroke();
+    }
+    ctx.restore();
+    circle(0, 0, 180, null, '#53708d20'); circle(0, 0, 85, null, '#53708d20');
+    ctx.setLineDash([4, 10]); circle(0, 0, RADIUS + 12, null, '#69f3db40'); ctx.setLineDash([]);
+    for (let i = 0; i < 12; i++) {
+      const angle = i * Math.PI / 6;
+      ctx.save(); ctx.rotate(angle); ctx.fillStyle = i % 2 ? '#69f3db55' : '#7587a440'; ctx.fillRect(RADIUS + 27, -2, 14, 4); ctx.restore();
+    }
+    ctx.textAlign = 'center'; ctx.fillStyle = '#6c8eab18'; ctx.font = '900 36px system-ui'; ctx.fillText('PULSE', 0, -5); ctx.fillText('ARENA', 0, 34);
+    const ball = state.ball, danger = ball?.target === 0;
+    const ballColor = state.freeze > 0 ? '#79b8ff' : state.slow > 0 ? '#b293ff' : danger ? '#ff668a' : '#eef5ff';
+    if (ball && ['playing', 'countdown', 'paused'].includes(state.phase)) {
+      const target = state.actors[ball.target];
+      ctx.setLineDash([3, 8]); ctx.lineDashOffset = -state.time * 25; ctx.strokeStyle = danger ? '#ff668a50' : '#eef5ff25';
+      ctx.beginPath(); ctx.moveTo(ball.x, ball.y); ctx.lineTo(target.x, target.y); ctx.stroke(); ctx.setLineDash([]);
+      for (let i = 0; i < state.trail.length; i++) {
+        ctx.globalAlpha = i / state.trail.length * .4; circle(state.trail[i].x, state.trail[i].y, 3 + i / state.trail.length * 5, ballColor);
+      }
+      ctx.globalAlpha = 1;
+    }
+    state.actors.forEach(drawActor);
+    if (ball && ['playing', 'countdown', 'paused'].includes(state.phase)) {
+      ctx.shadowColor = ballColor; ctx.shadowBlur = 25;
+      circle(ball.x, ball.y, 9 + Math.sin(state.time * 18) * .7, ballColor); circle(ball.x - 2, ball.y - 2, 3, '#fff'); ctx.shadowBlur = 0;
+      if (state.launch > 0) circle(ball.x, ball.y, 17 + Math.sin(state.time * 12) * 3, null, ballColor);
+    }
+    for (const ring of state.rings) { ctx.globalAlpha = ring.life * 2; circle(ring.x, ring.y, ring.radius, null, ring.color, 2); }
+    for (const particle of state.particles) { ctx.globalAlpha = Math.min(1, particle.life * 2); circle(particle.x, particle.y, 2.5, particle.color); }
+    ctx.globalAlpha = 1; ctx.restore();
+  }
+
+  const movementKeys = ['w', 'a', 's', 'd', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'];
+  window.addEventListener('keydown', event => {
+    const key = event.key.length === 1 ? event.key.toLowerCase() : event.key;
+    if (key === 'Escape' && !event.repeat) { event.preventDefault(); if (state.phase === 'shop') closeShop(); else setPause(state.phase !== 'paused'); return; }
+    if (!['playing', 'countdown'].includes(state.phase)) return;
+    if (movementKeys.includes(key) || [' ', 'f', 'q', 'Shift'].includes(key)) event.preventDefault();
+    if (movementKeys.includes(key)) keys.add(key);
+    if (!event.repeat && (key === ' ' || key === 'f')) activateParry(player());
+    if (!event.repeat && (key === 'Shift' || key === 'q')) activateAbility();
+  });
+  window.addEventListener('keyup', event => {
+    const key = event.key.length === 1 ? event.key.toLowerCase() : event.key;
+    if (![...touchKeys.values()].includes(key)) keys.delete(key);
+  });
+  canvas.addEventListener('pointermove', event => {
+    if (event.pointerType !== 'mouse' || state.phase !== 'playing') return;
+    const actor = player();
+    const facing = Math.atan2((event.clientY - originY) / scale - actor.y, (event.clientX - originX) / scale - actor.x);
+    if (net.active) net.aim = facing; else actor.facing = facing;
+  });
+  canvas.addEventListener('pointerdown', event => { if (event.button === 0 && state.phase === 'playing') { event.preventDefault(); activateParry(player()); } });
+  for (const button of document.querySelectorAll('.dpad button')) {
+    button.addEventListener('pointerdown', event => {
+      if (state.phase !== 'playing') return;
+      event.preventDefault(); button.setPointerCapture(event.pointerId);
+      touchKeys.set(event.pointerId, button.dataset.key); keys.add(button.dataset.key); button.classList.add('active');
+    });
+    const release = event => {
+      const key = touchKeys.get(event.pointerId);
+      touchKeys.delete(event.pointerId);
+      if (key && ![...touchKeys.values()].includes(key)) { keys.delete(key); button.classList.remove('active'); }
+    };
+    button.addEventListener('pointerup', release); button.addEventListener('pointercancel', release); button.addEventListener('lostpointercapture', release);
+  }
+  ui.parry.addEventListener('pointerdown', event => { event.preventDefault(); if (state.phase === 'playing') activateParry(player()); });
+  ui.special.addEventListener('pointerdown', event => { event.preventDefault(); activateAbility(); });
+  // Keyboard activation of buttons has no pointer event.
+  ui.parry.addEventListener('click', event => { if (event.detail === 0 && state.phase === 'playing') activateParry(player()); });
+  ui.special.addEventListener('click', event => { if (event.detail === 0) activateAbility(); });
+  document.querySelector('#start').onclick = start;
+  document.querySelector('#again').onclick = start;
+  document.querySelector('#retry').onclick = start;
+  document.querySelector('#resume').onclick = () => setPause(false);
+  ui.pause.onclick = () => setPause(state.phase !== 'paused');
+  document.querySelector('#choose-online').onclick = () => showOnlineMenu();
+  document.querySelector('#create-room').onclick = () => joinOnline(true);
+  document.querySelector('#join-room').onclick = () => joinOnline(false);
+  document.querySelector('#online-back').onclick = () => { resetOnline(); };
+  document.querySelector('#start-online').onclick = startOnlineRound;
+  document.querySelector('#exit-online').onclick = leaveOnline;
+  document.querySelector('#leave-lobby').onclick = leaveOnline;
+  document.querySelector('#copy-room').onclick = async () => {
+    const input = document.querySelector('#room-link');
+    try { await navigator.clipboard.writeText(input.value); toast('INVITE LINK COPIED'); }
+    catch (error) { console.warn('Cannot copy invite:', error); input.focus(); input.select(); toast('Select and copy the invite link above.', 2); }
+  };
+  document.querySelectorAll('[data-open-shop]').forEach(button => { button.onclick = openShop; });
+  document.querySelector('#close-shop').onclick = closeShop;
+  document.querySelectorAll('[data-tab]').forEach(button => { button.onclick = () => { shopTab = button.dataset.tab; ui['shop-message'].textContent = ''; renderShop(); }; });
+  document.querySelector('#reset-progress').onclick = () => document.querySelector('#reset-confirm').classList.remove('hidden');
+  document.querySelector('#cancel-reset').onclick = () => document.querySelector('#reset-confirm').classList.add('hidden');
+  document.querySelector('#confirm-reset').onclick = () => {
+    const reset = newProfile();
+    try { localStorage.setItem(SAVE_KEY, JSON.stringify(reset)); }
+    catch (error) { saveError(error, 'Progress could not be reset because browser storage is unavailable. No progress was removed.'); return; }
+    profile = reset; saveBlocked = false; ui['save-warning'].classList.add('hidden');
+    player().shield = 0; player().power = 0; player().guard = 0; player().dashTime = 0;
+    applyAppearance(); renderShop(); updateHud();
+    if (net.active) onlineCommand('loadout', onlineLoadout()).catch(onlineError);
+    document.querySelector('#reset-confirm').classList.add('hidden'); ui['shop-message'].textContent = 'Progress reset. Dash is equipped and free.';
+  };
+  window.addEventListener('blur', () => { clearInput(); setPause(true); });
+  document.addEventListener('visibilitychange', () => { if (document.hidden) { clearInput(); setPause(true); } });
+  window.addEventListener('resize', resize);
+  function frame(now) {
+    const dt = Math.min(.05, Math.max(0, (now - last) / 1000)); last = now;
+    if (net.active && now - net.lastSend >= 50) { net.lastSend = now; sendOnlineInput(); }
+    update(dt); draw(); requestAnimationFrame(frame);
+  }
+  state.actors = makeActors(); applyAppearance(); resize(); updateHud(); requestAnimationFrame(frame);
+  const invite = new URLSearchParams(location.search).get('room');
+  if (invite) { document.querySelector('#join-code').value = invite.slice(0, 6).toUpperCase(); showOnlineMenu('Enter your name, then join your friend.'); }
+})();
+</script>
+</body>
+</html>
